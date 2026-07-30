@@ -1,0 +1,40 @@
+// PLAN-V2.md §5.1 — ตารางของ NestJS เท่านั้น (users, sessions)
+// ai service (FastAPI/Alembic) เป็นเจ้าของ gmail_tokens/emails/classifications/gmail_labels
+// ห้าม Prisma migrate ไปแตะตารางฝั่งนั้น (ดู PLAN-V2.md §2 กติกาความเป็นเจ้าของ)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @unique
+  displayName String?
+  avatarUrl   String?
+  createdAt   DateTime  @default(now())
+  lastLoginAt DateTime?
+  isActive    Boolean   @default(true)
+  sessions    Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
