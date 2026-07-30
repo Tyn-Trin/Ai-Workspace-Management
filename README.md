@@ -2,7 +2,7 @@
 
 ระบบ agent ที่จัดหมวดหมู่และจัดลำดับความสำคัญอีเมล Gmail ให้อัตโนมัติ แก้ปัญหาทีมเล็ก 5-20 คนใน Google Workspace org เดียวที่มีอีเมลเข้า 150-200 ฉบับ/วัน อ่าน/จัดลำดับเองไม่ทัน
 
-# Deploy ไว้ที่ 
+# Deploy To 
 
 https://frontend-production-cf69a.up.railway.app/
 
