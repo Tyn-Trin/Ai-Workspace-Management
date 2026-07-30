@@ -2,15 +2,14 @@
 
 ระบบ agent ที่จัดหมวดหมู่และจัดลำดับความสำคัญอีเมล Gmail ให้อัตโนมัติ แก้ปัญหาทีมเล็ก 5-20 คนใน Google Workspace org เดียวที่มีอีเมลเข้า 150-200 ฉบับ/วัน อ่าน/จัดลำดับเองไม่ทัน
 
-ต่างจากเวอร์ชัน assessment ที่ต้องกดปุ่ม "Sync now" เอง — ระบบนี้ทำงานแบบ **push-based เต็มรูปแบบ**: Gmail แจ้งเตือนอัตโนมัติทันทีที่มีเมลเข้าผ่าน `users.watch()` + Cloud Pub/Sub ให้ Claude อ่าน subject + snippet + sender แล้วตัดสินใจ 2 อย่าง: **category** (fixed list: Customer / Internal / Vendor / Meeting / Spam) และ **priority** (Urgent / Normal / Low) พร้อมเหตุผลสั้นๆ จากนั้นติด label จริงบน Gmail (nested label เช่น `AI/Priority/Urgent`) แล้วดันผลขึ้น dashboard แบบเรียลไทม์ผ่าน WebSocket — เปิดหน้าจอค้างไว้แล้วเห็นเมลใหม่โผล่เองภายในไม่กี่วินาที ไม่ต้อง refresh
 
 ## Screenshot
 
-<!-- แปะรูป dashboard ตรงนี้ -->
+<img width="1920" height="919" alt="image" src="https://github.com/user-attachments/assets/5a706e0e-7b86-4e74-81ac-a1afc2a7150a" />
+
 
 ## Flow การทำงาน
 
-ทำงานแบบ event-driven ทั้งเส้น ไม่มี background polling/cron ดึงเมลเอง (มีแค่ cron เสริมสำหรับ renew watch + reconcile กันหลุด ดู §8.2 ใน [`docs/PLAN-V2.md`](docs/PLAN-V2.md)):
 
 ### 1. Watch — Gmail แจ้งเตือนอัตโนมัติทันทีที่มีเมลเข้า
 
@@ -40,7 +39,6 @@ classify เสร็จปุ๊บ ai service แจ้ง backend ให้ p
 | Persistence | Postgres — 2 schema แยก owner ชัดเจน (Prisma migrate ฝั่ง backend, Alembic ฝั่ง ai) |
 | Hosting | Railway (Postgres managed, private networking ระหว่าง service) |
 
-สถาปัตยกรรมเต็ม + data model + API contract + failure mode ดูที่ [`docs/PLAN-V2.md`](docs/PLAN-V2.md)
 
 ## วิธีใช้งาน
 
