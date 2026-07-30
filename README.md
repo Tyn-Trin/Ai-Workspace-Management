@@ -2,6 +2,9 @@
 
 ระบบ agent ที่จัดหมวดหมู่และจัดลำดับความสำคัญอีเมล Gmail ให้อัตโนมัติ แก้ปัญหาทีมเล็ก 5-20 คนใน Google Workspace org เดียวที่มีอีเมลเข้า 150-200 ฉบับ/วัน อ่าน/จัดลำดับเองไม่ทัน
 
+# Deploy ไว้ที่ 
+
+https://frontend-production-cf69a.up.railway.app/
 
 ## Screenshot
 
@@ -58,3 +61,13 @@ cd apps/frontend && npm install && npm run dev          # port 3000
 ```
 
 เปิด `http://localhost:3000` กด "Sign in with Google" ครั้งแรกเพื่อเชื่อมต่อ Gmail (ต้องมี Pub/Sub push subscription ชี้มาถึงเครื่องจริงแล้ว — dev ใช้ `ngrok http 3001` แทน `localhost` เพราะ Pub/Sub ต้องการ public HTTPS) จากนั้นส่งเมลเข้า inbox แล้วรอดูแถวใหม่ขึ้น dashboard เองภายในไม่กี่วินาที
+
+## งานที่ยังไม่ทำ (Phase 2 TODO)
+
+ตอนนี้ login กับ connect Gmail เป็น flow เดียวกัน (consent ครั้งเดียวได้ทั้งคู่) และ user ที่ไม่ active แล้วก็ยังไม่ถูกตัดออกจาก cron:
+
+- **cron ฝั่ง `apps/ai` ไม่กรอง user ที่ไม่ active** — `renew-watch` (รายวัน) และ `reconcile` (ทุก 30 นาที) วน loop ทุกแถวใน `gmail_tokens` ตรงๆ โดยไม่เช็ค `isActive`/session ล่าสุดจากฝั่ง backend เลย เพราะสองตารางนี้อยู่คนละ DB (Prisma vs Alembic) ไม่มีการเชื่อมข้อมูลข้ามกัน — โค้ดมี `TODO(Phase 2)` เขียนกำกับไว้ที่ [`apps/ai/app/services/gmail_watch.py`](apps/ai/app/services/gmail_watch.py) แล้ว
+- **ไม่มีปุ่ม/endpoint "Disconnect Gmail"** — ไม่มีทางลบ `gmail_tokens` หรือเรียก `stop_watch()` จริงจากในแอป ทางเดียวที่หยุดได้ตอนนี้คือ user ไป revoke เองที่ Google Account permissions
+- **token ที่ถูก revoke แล้วไม่ถูก cleanup** — ถ้า user revoke ที่ Google เอง cron จะเจอ `invalid_grant`, บันทึกลง `sync_error` เฉยๆ แล้ว retry ทุกรอบต่อไปเรื่อยๆ ไม่มี logic ปิด/ลบแถวทิ้งอัตโนมัติ
+
+ผลคือ user ที่ login ครั้งเดียวแล้วไม่กลับมาเปิดแอปอีกเลย (session หมดอายุ 7 วัน) แต่ยังไม่ revoke Google access เอง ระบบจะยัง watch/classify เมลใหม่ให้ตามปกติ — ยังมีต้นทุน Claude API เกิดขึ้นได้ถ้ามีเมลเข้าจริง
